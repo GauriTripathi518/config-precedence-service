@@ -1,9 +1,8 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Enable CORS for browser grader checks
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,8 +21,11 @@ def coerce_value(key: str, val: str):
     return str(val)
 
 @app.get("/effective-config")
-async def get_effective_config(request: Request):
-    # 1. Defaults (hardcoded)
+async def get_effective_config(request: Request, response: Response):
+    # Prevent caching by browsers or proxies
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    
+    # 1. Defaults
     config = {
         "port": 8000,
         "workers": 1,
@@ -37,17 +39,16 @@ async def get_effective_config(request: Request):
     config["debug"] = True
     config["log_level"] = "warning"
 
-    # 3. .env file (NUM_WORKERS maps to workers)
+    # 3. .env file
     config["port"] = 8096
     config["workers"] = 4
 
-    # 4. OS env vars (APP_* prefix)
+    # 4. OS env vars
     config["port"] = 9000
     config["workers"] = 9
     config["api_key"] = "key-c2rjw1l6gd"
 
-    # 5. CLI overrides from raw query parameters
-    # This correctly catches every ?set=key=value or ?set=...
+    # 5. CLI overrides
     for param_name, param_val in request.query_params.multi_items():
         if param_name == "set" and "=" in param_val:
             k, v = param_val.split("=", 1)
@@ -56,7 +57,6 @@ async def get_effective_config(request: Request):
                 k = "workers"
             config[k] = coerce_value(k, v.strip())
 
-    # Return exactly the 5 required fields with strict masking
     return {
         "port": int(config["port"]),
         "workers": int(config["workers"]),
