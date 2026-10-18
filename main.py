@@ -61,5 +61,5 @@ async def get_effective_config(request: Request, response: Response):
         "workers": int(config["workers"]),
         "debug": bool(config["debug"]),
         "log_level": str(config["log_level"]),
-        "api_key": "*"*5,
+        "api_key": "****",
     }
