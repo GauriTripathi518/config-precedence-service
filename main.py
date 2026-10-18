@@ -75,5 +75,5 @@ def get_effective_config(set: Optional[List[str]] = Query(default=None)):
         "workers": int(config["workers"]),
         "debug": bool(config["debug"]),
         "log_level": str(config["log_level"]),
-        "api_key": "*****",
+        "api_key": "*****",  # Exactly 5 asterisks
     }
